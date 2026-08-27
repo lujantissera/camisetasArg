@@ -1,29 +1,43 @@
 const { getDB } = require('../db/database');
 
-const SIZE_ORDER = { S: 1, M: 2, L: 3, XL: 4 };
+const SIZE_ORDER = { XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6, XXXL: 7 };
+const bySize = (a, b) => (SIZE_ORDER[a.size] || 99) - (SIZE_ORDER[b.size] || 99);
 
-function getAllProducts() {
+async function getAllProducts() {
   const db = getDB();
-  const products = db.prepare('SELECT * FROM products WHERE active = 1 ORDER BY id').all();
-  const getVariants = db.prepare('SELECT * FROM product_variants WHERE product_id = ?');
+  const { rows: products } = await db.execute('SELECT * FROM products WHERE active = 1 ORDER BY id');
+  if (products.length === 0) return [];
+
+  const ids = products.map(p => p.id);
+  const placeholders = ids.map(() => '?').join(',');
+  const { rows: variants } = await db.execute({
+    sql: `SELECT * FROM product_variants WHERE product_id IN (${placeholders})`,
+    args: ids,
+  });
+
+  const variantsByProduct = {};
+  for (const v of variants) {
+    (variantsByProduct[v.product_id] ??= []).push(v);
+  }
 
   return products.map(p => ({
     ...p,
-    variants: getVariants.all(p.id).sort((a, b) => SIZE_ORDER[a.size] - SIZE_ORDER[b.size]),
+    variants: (variantsByProduct[p.id] || []).sort(bySize),
   }));
 }
 
-function getProductById(id) {
+async function getProductById(id) {
   const db = getDB();
-  const product = db.prepare('SELECT * FROM products WHERE id = ? AND active = 1').get(id);
+  const { rows } = await db.execute({ sql: 'SELECT * FROM products WHERE id = ? AND active = 1', args: [id] });
+  const product = rows[0];
   if (!product) return null;
 
-  const variants = db
-    .prepare('SELECT * FROM product_variants WHERE product_id = ?')
-    .all(product.id)
-    .sort((a, b) => SIZE_ORDER[a.size] - SIZE_ORDER[b.size]);
+  const { rows: variants } = await db.execute({
+    sql: 'SELECT * FROM product_variants WHERE product_id = ?',
+    args: [product.id],
+  });
 
-  return { ...product, variants };
+  return { ...product, variants: variants.sort(bySize) };
 }
 
 module.exports = { getAllProducts, getProductById };

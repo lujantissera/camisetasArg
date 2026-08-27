@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Environment variables (contienen credenciales reales — nunca commitear)
+.env
+.env.local
+.env.*.local
+
+# Base de datos local (dev)
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# Build output
+dist/
+build/
+
+# Logs
+npm-debug.log*
+*.log
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/

@@ -1,42 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth0 } from '@auth0/auth0-react';
+import axios from 'axios';
 import { useCart } from '../context/CartContext';
-
-const SHIPPING_OPTIONS = [
-  {
-    id: 'free',
-    label: 'Envío gratuito',
-    desc: '10–15 días hábiles',
-    price: 0,
-    icon: '📦',
-  },
-  {
-    id: 'standard',
-    label: 'Envío estándar',
-    desc: '5–7 días hábiles',
-    price: 5,
-    icon: '🚚',
-  },
-  {
-    id: 'express',
-    label: 'Envío express',
-    desc: '2–3 días hábiles',
-    price: 12,
-    icon: '⚡',
-  },
-];
 
 const FALLBACK_IMG = 'https://placehold.co/80x80/74ACDF/FFFFFF?text=ARG';
 
 export default function Cart() {
   const { items, removeFromCart, updateQuantity, subtotal, itemCount } = useCart();
-  const { isAuthenticated, loginWithRedirect } = useAuth0();
   const navigate = useNavigate();
+  const [shippingOptions, setShippingOptions] = useState([]);
   const [shippingId, setShippingId] = useState('standard');
 
-  const shipping = SHIPPING_OPTIONS.find(o => o.id === shippingId);
-  const total = subtotal + shipping.price;
+  useEffect(() => {
+    axios.get('/api/shipping-options').then(r => setShippingOptions(r.data)).catch(() => {});
+  }, []);
+
+  const shipping = shippingOptions.find(o => o.id === shippingId);
+  const total = subtotal + (shipping?.price || 0);
 
   if (items.length === 0) {
     return (
@@ -50,11 +30,7 @@ export default function Cart() {
   }
 
   function handleCheckout() {
-    if (!isAuthenticated) {
-      loginWithRedirect();
-      return;
-    }
-    navigate('/checkout', { state: { shippingMethod: shippingId, shippingCost: shipping.price } });
+    navigate('/checkout', { state: { shippingMethod: shippingId, shippingCost: shipping?.price ?? 0 } });
   }
 
   return (
@@ -116,7 +92,7 @@ export default function Cart() {
           <div className="card p-6">
             <h3 className="font-bold text-gray-800 mb-4">🚚 Método de envío</h3>
             <div className="space-y-3">
-              {SHIPPING_OPTIONS.map(opt => (
+              {shippingOptions.map(opt => (
                 <label
                   key={opt.id}
                   className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
@@ -155,8 +131,8 @@ export default function Cart() {
                 <span>€{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-gray-500">
-                <span>Envío ({shipping.label})</span>
-                <span>{shipping.price === 0 ? 'Gratis' : `€${shipping.price.toFixed(2)}`}</span>
+                <span>Envío ({shipping?.label || '...'})</span>
+                <span>{(shipping?.price ?? 0) === 0 ? 'Gratis' : `€${(shipping?.price ?? 0).toFixed(2)}`}</span>
               </div>
               <div className="border-t pt-3 flex justify-between font-bold text-lg text-gray-800">
                 <span>Total</span>
@@ -165,7 +141,7 @@ export default function Cart() {
             </div>
 
             <button onClick={handleCheckout} className="btn-primary w-full">
-              {isAuthenticated ? '💳 Proceder al pago' : '🔐 Iniciar sesión para pagar'}
+              💳 Proceder al pago
             </button>
           </div>
         </div>

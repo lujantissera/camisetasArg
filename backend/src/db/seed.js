@@ -1,52 +1,109 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
-const { initDB, getDB } = require('./database');
+const { getDB, initDB, withTransaction } = require('./database');
 
-initDB();
-const db = getDB();
-
-// Clear existing data
-db.prepare('DELETE FROM order_items').run();
-db.prepare('DELETE FROM orders').run();
-db.prepare('DELETE FROM product_variants').run();
-db.prepare('DELETE FROM products').run();
-
+// Catálogo real de stock instantáneo (ver Requisitos.md §3.1). Precio 25€ es un placeholder
+// parejo a ajustar cuando definan precios reales por producto.
 const products = [
   {
-    name: 'Camiseta Argentina Local 2024',
-    description: 'La camiseta oficial de la Selección Argentina para la temporada 2024. Diseño icónico con las tres estrellas y la AFA. Tela de alta tecnología, idéntica a la del plantel.',
-    image_url: 'https://images.unsplash.com/photo-1598970605070-a38a6ccd3a2d?w=600&q=80',
-    price: 20.0,
+    name: 'River 125th',
+    club: 'River Plate',
+    category: 'camiseta',
+    version: 'retro',
+    description: 'Camiseta conmemorativa del 125° aniversario de River Plate.',
+    price: 25.0,
+    variants: [
+      { size: 'M', stock: 1 },
+      { size: 'XXL', stock: 3 },
+    ],
   },
   {
-    name: 'Camiseta Argentina Visitante 2024',
-    description: 'La alternativa oscura de la Selección. Diseño moderno en tonos profundos con detalles celestes y dorados. Perfecta para los partidos de visitante.',
-    image_url: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=600&q=80',
-    price: 20.0,
+    name: 'River Home Player Version',
+    club: 'River Plate',
+    category: 'camiseta',
+    version: 'titular',
+    description: 'Camiseta titular 2026 de River Plate, versión jugador.',
+    price: 25.0,
+    variants: [
+      { size: 'L', stock: 1 },
+      { size: 'XL', stock: 1 },
+      { size: 'XXL', stock: 1 },
+    ],
   },
   {
-    name: 'Camiseta Argentina Copa América Campeón',
-    description: 'Edición especial conmemorativa del tricampeonato de la Copa América 2024. Parche de campeón incluido. Edición limitada.',
-    image_url: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&q=80',
-    price: 20.0,
+    name: 'Racing Home Player Version',
+    club: 'Racing Club',
+    category: 'camiseta',
+    version: 'titular',
+    description: 'Camiseta titular 2026 de Racing Club, versión jugador.',
+    price: 25.0,
+    variants: [
+      { size: 'L', stock: 1 },
+      { size: 'XL', stock: 1 },
+      { size: 'XXL', stock: 1 },
+    ],
+  },
+  {
+    name: 'Racing Home Retro',
+    club: 'Racing Club',
+    category: 'camiseta',
+    version: 'retro',
+    description: 'Camiseta retro de Racing Club.',
+    price: 25.0,
+    variants: [{ size: 'XL', stock: 1 }],
+  },
+  {
+    name: 'Slo Home',
+    club: 'San Lorenzo',
+    category: 'camiseta',
+    version: 'titular',
+    description: 'Camiseta titular de San Lorenzo de Almagro.',
+    price: 25.0,
+    variants: [{ size: 'XL', stock: 1 }],
+  },
+  {
+    name: 'Slo Away',
+    club: 'San Lorenzo',
+    category: 'camiseta',
+    version: 'suplente',
+    description: 'Camiseta suplente de San Lorenzo de Almagro.',
+    price: 25.0,
+    variants: [{ size: 'XXL', stock: 1 }],
   },
 ];
 
-const insertProduct = db.prepare(
-  'INSERT INTO products (name, description, image_url, price) VALUES (?, ?, ?, ?)'
-);
-const insertVariant = db.prepare(
-  'INSERT INTO product_variants (product_id, size, stock) VALUES (?, ?, ?)'
-);
-const SIZES = ['S', 'M', 'L', 'XL'];
+async function seed() {
+  await initDB();
 
-const seedAll = db.transaction(() => {
-  for (const p of products) {
-    const { lastInsertRowid } = insertProduct.run(p.name, p.description, p.image_url, p.price);
-    for (const size of SIZES) {
-      insertVariant.run(lastInsertRowid, size, 50);
+  await withTransaction(async tx => {
+    // Orden FK-safe
+    await tx.execute('DELETE FROM order_items');
+    await tx.execute('DELETE FROM orders');
+    await tx.execute('DELETE FROM product_variants');
+    await tx.execute('DELETE FROM products');
+
+    for (const p of products) {
+      const result = await tx.execute({
+        sql: `INSERT INTO products (name, description, club, category, version, price)
+              VALUES (?, ?, ?, ?, ?, ?)`,
+        args: [p.name, p.description, p.club, p.category, p.version, p.price],
+      });
+      const productId = Number(result.lastInsertRowid);
+
+      for (const v of p.variants) {
+        await tx.execute({
+          sql: 'INSERT INTO product_variants (product_id, size, stock) VALUES (?, ?, ?)',
+          args: [productId, v.size, v.stock],
+        });
+      }
     }
-  }
-});
+  });
 
-seedAll();
-console.log(`✅ Seeded ${products.length} products with sizes S/M/L/XL (50 units each)`);
+  console.log(`✅ Seeded ${products.length} productos reales (River Plate, San Lorenzo, Racing Club)`);
+}
+
+seed()
+  .catch(err => {
+    console.error('❌ Seed failed:', err);
+    process.exitCode = 1;
+  })
+  .finally(() => getDB().close?.());

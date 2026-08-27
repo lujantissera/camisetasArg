@@ -1,38 +1,47 @@
-# La Camiseta Argentina ⭐⭐⭐
+# Camisetas Argentinas ⭐⭐⭐
 
-E-commerce de camisetas de la Selección Argentina. Stack completo con React, Node.js, Auth0 y Stripe.
+E-commerce de camisetas de clubes argentinos (River Plate, San Lorenzo, Racing Club) importadas y vendidas en España. Stack completo con React, Node.js, Auth0 (opcional) y Stripe.
+
+Checkout disponible **con cuenta o como invitado** — no hace falta loguearse para comprar.
 
 ---
 
 ## Stack tecnológico
 
-| Capa          | Tecnología                                        |
-|---------------|---------------------------------------------------|
-| Frontend      | React 18 + Vite + TailwindCSS                     |
-| Autenticación | Auth0 (OAuth 2.0 / OIDC)                         |
-| Backend       | Node.js + Express                                 |
-| Base de datos | SQLite (`better-sqlite3`)                         |
-| Pagos         | Stripe (Payment Element)                          |
-| Envío         | Gratis / Estándar €5 / Express €12                |
+| Capa          | Tecnología                                                  |
+|---------------|---------------------------------------------------------------|
+| Frontend      | React 18 + Vite + TailwindCSS, desplegado en Vercel          |
+| Autenticación | Auth0 (OAuth 2.0 / OIDC) — **opcional**, checkout invitado disponible |
+| Backend       | Node.js + Express, desplegado en Render                      |
+| Base de datos | SQLite en la nube vía [Turso](https://turso.tech) (`@libsql/client`) — en dev local usa un archivo sin necesitar cuenta |
+| Pagos         | Stripe (Payment Element)                                     |
+| Envío         | Gratis / Estándar €5 / Express €12 (`GET /api/shipping-options`) |
+
+Ver [Requisitos.md](./Requisitos.md) para el detalle de negocio y decisiones de producto.
 
 ---
 
 ## Estructura del proyecto
 
 ```
-camisetas-arg/
+camisetasArg/
 ├── backend/
 │   ├── src/
+│   │   ├── config/
+│   │   │   └── shipping.js   # fuente única de verdad de opciones de envío
 │   │   ├── db/
-│   │   │   ├── database.js   # esquema SQLite + init
-│   │   │   └── seed.js       # datos de prueba
+│   │   │   ├── database.js   # cliente libSQL + esquema + init + transacciones
+│   │   │   └── seed.js       # catálogo real (6 productos)
 │   │   ├── middleware/
-│   │   │   └── auth.js       # JWT via Auth0 + auto-create customer
+│   │   │   └── auth.js       # Auth0 opcional (checkJwt + attachCustomer + requireAuth)
+│   │   ├── utils/
+│   │   │   └── asyncHandler.js
 │   │   ├── routes/
 │   │   │   ├── products.js   # GET /api/products
-│   │   │   ├── orders.js     # CRUD órdenes + confirm
-│   │   │   ├── customers.js  # perfil del cliente
-│   │   │   └── payments.js   # Stripe publishable key
+│   │   │   ├── orders.js     # CRUD órdenes + confirm (invitado o cuenta)
+│   │   │   ├── customers.js  # perfil del cliente (requiere cuenta)
+│   │   │   ├── payments.js   # Stripe publishable key
+│   │   │   └── shipping.js   # opciones de envío
 │   │   └── index.js
 │   ├── .env.example
 │   └── package.json
@@ -42,21 +51,31 @@ camisetas-arg/
 │   │   ├── components/Navbar.jsx
 │   │   └── pages/
 │   │       ├── Home.jsx
-│   │       ├── Shop.jsx
+│   │       ├── Shop.jsx      # catálogo con filtro por club, talles dinámicos
 │   │       ├── Cart.jsx
-│   │       ├── Checkout.jsx  # 2 pasos: dirección + Stripe
-│   │       └── Orders.jsx
+│   │       ├── Checkout.jsx  # 2 pasos: dirección (+email) → Stripe, invitado o cuenta
+│   │       └── Orders.jsx    # requiere cuenta
 │   ├── .env.example
 │   └── package.json
 └── data/
-    └── shop.db               # creado automáticamente
+    └── shop.db               # solo en dev local, creado automáticamente
 ```
 
 ---
 
 ## Configuración paso a paso
 
-### 1. Auth0
+### 1. Turso (base de datos)
+
+**En desarrollo no hace falta cuenta**: si `LIBSQL_URL` está vacío, el backend usa un archivo SQLite local (`data/shop.db`), igual que antes.
+
+Para producción:
+1. Creá una cuenta en [turso.tech](https://turso.tech) (plan gratis)
+2. `turso db create camisetas-arg`
+3. `turso db show camisetas-arg --url` → `LIBSQL_URL`
+4. `turso db tokens create camisetas-arg` → `LIBSQL_AUTH_TOKEN`
+
+### 2. Auth0 (opcional — solo si querés que los clientes puedan crear cuenta)
 
 1. Creá una cuenta en [auth0.com](https://auth0.com)
 2. Creá una **Single Page Application** → copiá `Domain` y `Client ID`
@@ -73,7 +92,7 @@ exports.onExecutePostLogin = async (event, api) => {
 };
 ```
 
-### 2. Stripe
+### 3. Stripe
 
 1. Creá una cuenta en [stripe.com](https://stripe.com)
 2. En modo **Test**, copiá `Publishable key` y `Secret key`
@@ -85,12 +104,14 @@ stripe listen --forward-to http://localhost:3001/api/webhook
 # Copiá el "webhook signing secret" que aparece (whsec_...)
 ```
 
-### 3. Variables de entorno
+### 4. Variables de entorno
 
 **Backend** — copiar `.env.example` a `.env` y completar:
 ```env
 PORT=3001
 FRONTEND_URL=http://localhost:5173
+LIBSQL_URL=
+LIBSQL_AUTH_TOKEN=
 AUTH0_DOMAIN=tu-tenant.auth0.com
 AUTH0_AUDIENCE=https://camisetas-arg-api
 STRIPE_SECRET_KEY=sk_test_...
@@ -113,7 +134,7 @@ VITE_AUTH0_AUDIENCE=https://camisetas-arg-api
 # Backend
 cd backend
 npm install
-npm run seed       # poblar DB con 3 camisetas (S/M/L/XL, 50 unidades c/u)
+npm run seed       # poblar DB con el catálogo real (6 camisetas)
 npm run dev        # http://localhost:3001
 
 # Frontend (en otra terminal)
@@ -131,37 +152,44 @@ npm run dev        # http://localhost:5173
 |--------|----------|-------------|
 | GET | `/api/products` | Listar camisetas con variantes |
 | GET | `/api/products/:id` | Detalle de una camiseta |
+| GET | `/api/shipping-options` | Opciones de envío disponibles |
+| GET | `/api/payments/config` | Clave pública de Stripe |
 | GET | `/api/health` | Health check |
 
-### Protegidos (requieren JWT de Auth0)
+### Auth opcional (funcionan logueado o como invitado)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/api/orders` | **createSalesOrder** — crea borrador |
-| GET | `/api/orders` | Listar pedidos del cliente |
-| GET | `/api/orders/:id` | Detalle de pedido |
-| POST | `/api/orders/:id/items` | **addItem** — agrega ítem |
-| DELETE | `/api/orders/:id/items/:itemId` | **removeItem** |
+| POST | `/api/orders` | Crea borrador. Si no hay sesión, requiere `guestEmail` en el body — devuelve `guest_token` a reenviar en el header `X-Guest-Token` |
+| GET | `/api/orders/:id` | Detalle de pedido (dueño = customer o guest_token) |
+| POST | `/api/orders/:id/items` | Agrega ítem |
+| DELETE | `/api/orders/:id/items/:itemId` | Elimina ítem |
 | PUT | `/api/orders/:id/items/:itemId` | Actualiza cantidad |
 | PUT | `/api/orders/:id/shipping` | Método de envío + dirección |
-| POST | `/api/orders/:id/confirm` | **confirmSalesOrder** → crea PaymentIntent |
+| POST | `/api/orders/:id/confirm` | Crea el PaymentIntent de Stripe |
+| POST | `/api/webhook` | Webhook de Stripe (pago confirmado, descuenta stock) |
+
+### Requieren cuenta (Auth0)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/orders` | Historial de pedidos del cliente |
 | GET | `/api/customers/me` | Perfil del cliente |
 | PUT | `/api/customers/me` | Actualizar perfil |
-| GET | `/api/payments/config` | Clave pública de Stripe |
-| POST | `/api/webhook` | Webhook de Stripe (pago confirmado) |
 
 ---
 
-## Base de datos (SQLite)
+## Base de datos (SQLite / Turso)
 
 ```
 customers        — auth0_id, email, name, phone
-products         — name, description, image_url, price
-product_variants — product_id, size (S/M/L/XL), stock
-orders           — customer_id, status, shipping_*, totals, stripe_*
+products         — name, description, club, category, version, type, price, image_url
+product_variants — product_id, size (XS–XXXL), stock
+orders           — customer_id (nullable), guest_email/name/phone/token, status, shipping_*, totals, stripe_*
 order_items      — order_id, variant_id, quantity, unit_price
 ```
 
 **Estados de orden:** `draft` → `pending_payment` → `paid` → `shipped` | `cancelled`
+
+**Invitado vs. cuenta:** un pedido tiene `customer_id` (si hay cuenta) **o** `guest_email` + `guest_token` (si es invitado) — nunca ambos vacíos.
 
 ---
 
@@ -177,8 +205,13 @@ CVC:      cualquier 3 dígitos
 
 ## Productos incluidos (seed)
 
-| Modelo | Talles | Precio | Stock |
-|--------|--------|--------|-------|
-| Camiseta Argentina Local 2024 | S M L XL | €20 | 50 c/u |
-| Camiseta Argentina Visitante 2024 | S M L XL | €20 | 50 c/u |
-| Camiseta Copa América Campeón | S M L XL | €20 | 50 c/u |
+| Club | Producto | Versión | Talles | Precio |
+|------|----------|---------|--------|--------|
+| River Plate | River 125th | Retro | M, XXL | €25 |
+| River Plate | River Home Player Version | Titular | L, XL, XXL | €25 |
+| Racing Club | Racing Home Player Version | Titular | L, XL, XXL | €25 |
+| Racing Club | Racing Home Retro | Retro | XL | €25 |
+| San Lorenzo | Slo Home | Titular | XL | €25 |
+| San Lorenzo | Slo Away | Suplente | XXL | €25 |
+
+Precio de 25€ parejo es provisorio — ver Requisitos.md para ajustarlo por producto. Fotos pendientes de subir (ver carpeta de Drive organizada en Requisitos.md §3.4).

@@ -1,4 +1,4 @@
-const { getDB } = require('../db/database');
+const { getDB, withTransaction } = require('../db/database');
 
 async function handleStripeWebhook(req, res) {
   const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -16,26 +16,36 @@ async function handleStripeWebhook(req, res) {
     const paymentIntent = event.data.object;
     const db = getDB();
 
-    const order = db
-      .prepare('SELECT * FROM orders WHERE stripe_payment_intent_id=?')
-      .get(paymentIntent.id);
+    const { rows } = await db.execute({
+      sql: 'SELECT * FROM orders WHERE stripe_payment_intent_id=?',
+      args: [paymentIntent.id],
+    });
+    const order = rows[0];
 
     if (order) {
-      db.prepare(
-        'UPDATE orders SET status="paid", updated_at=CURRENT_TIMESTAMP WHERE id=?'
-      ).run(order.id);
+      await withTransaction(async tx => {
+        await tx.execute({
+          sql: "UPDATE orders SET status='paid', updated_at=CURRENT_TIMESTAMP WHERE id=?",
+          args: [order.id],
+        });
 
-      const items = db
-        .prepare('SELECT variant_id, quantity FROM order_items WHERE order_id=?')
-        .all(order.id);
+        const { rows: items } = await tx.execute({
+          sql: 'SELECT variant_id, quantity FROM order_items WHERE order_id=?',
+          args: [order.id],
+        });
 
-      const deductStock = db.prepare(
-        'UPDATE product_variants SET stock=stock-? WHERE id=? AND stock>=?'
-      );
-      const deductAll = db.transaction(rows => {
-        for (const row of rows) deductStock.run(row.quantity, row.variant_id, row.quantity);
+        for (const item of items) {
+          const result = await tx.execute({
+            sql: 'UPDATE product_variants SET stock=stock-? WHERE id=? AND stock>=?',
+            args: [item.quantity, item.variant_id, item.quantity],
+          });
+          if (result.rowsAffected === 0) {
+            console.warn(
+              `⚠️ Oversell evitado: orden ${order.id}, variante ${item.variant_id}, pedía ${item.quantity} pero no había stock suficiente.`
+            );
+          }
+        }
       });
-      deductAll(items);
     }
   }
 

@@ -1,7 +1,9 @@
 const { expressjwt: jwt } = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
-const { getDB } = require('../db/database');
+const customersService = require('../services/customers.service');
 
+// credentialsRequired: false -> si viene un token lo valida, si no viene sigue sin error (invitado).
+// Si viene un token inválido, sí falla (evita aceptar tokens rotos silenciosamente).
 const checkJwt = jwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,
@@ -12,33 +14,36 @@ const checkJwt = jwt({
   audience: process.env.AUTH0_AUDIENCE,
   issuer: `https://${process.env.AUTH0_DOMAIN}/`,
   algorithms: ['RS256'],
+  credentialsRequired: false,
 });
 
-// Auto-create customer in local DB on first authenticated request
-function ensureCustomer(req, res, next) {
+// Adjunta req.customer si hay sesión Auth0 válida, y req.guestToken si el cliente mandó uno
+// (header X-Guest-Token, generado por el backend al crear un pedido como invitado).
+// Nunca corta la request: el checkout debe funcionar logueado o no.
+async function attachCustomer(req, res, next) {
   try {
-    const auth0Id = req.auth.sub;
-    const db = getDB();
+    req.guestToken = req.headers['x-guest-token'] || null;
 
-    let customer = db.prepare('SELECT * FROM customers WHERE auth0_id = ?').get(auth0Id);
-
-    if (!customer) {
-      // Auth0 can include email/name via custom actions (see README)
+    if (req.auth?.sub) {
       const email = req.auth.email || req.auth[`${process.env.AUTH0_AUDIENCE}/email`] || '';
       const name = req.auth.name || req.auth.nickname || '';
-
-      const result = db.prepare(
-        'INSERT INTO customers (auth0_id, email, name) VALUES (?, ?, ?)'
-      ).run(auth0Id, email, name);
-
-      customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(result.lastInsertRowid);
+      req.customer = await customersService.findOrCreateByAuth0Id(req.auth.sub, { email, name });
+    } else {
+      req.customer = null;
     }
 
-    req.customer = customer;
     next();
   } catch (err) {
     next(err);
   }
 }
 
-module.exports = { checkJwt, ensureCustomer };
+// Para rutas que sí necesitan cuenta (historial de pedidos, perfil) — se monta después de attachCustomer.
+function requireAuth(req, res, next) {
+  if (!req.customer) {
+    return res.status(401).json({ error: 'Se requiere iniciar sesión' });
+  }
+  next();
+}
+
+module.exports = { checkJwt, attachCustomer, requireAuth };

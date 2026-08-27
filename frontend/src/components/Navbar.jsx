@@ -31,7 +31,7 @@ export default function Navbar() {
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <span className="text-xl leading-none">⭐⭐⭐</span>
           <span className="font-display text-2xl tracking-widest text-arg-blue-dk hidden sm:block">
-            LA CAMISETA
+            CAMISETAS ARG
           </span>
         </Link>
 

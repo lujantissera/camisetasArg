@@ -56,6 +56,7 @@ function StripeForm({ onSuccess }) {
 // ── Checkout page ──────────────────────────────────────────────────────────────
 const FIELDS = [
   { key: 'fullName',    label: 'Nombre completo',   placeholder: 'Juan García' },
+  { key: 'email',       label: 'Email',              placeholder: 'juan@ejemplo.com', type: 'email' },
   { key: 'street',      label: 'Dirección',          placeholder: 'Calle Mayor 123, 2° izq.' },
   { key: 'city',        label: 'Ciudad',             placeholder: 'Madrid' },
   { key: 'postalCode',  label: 'Código postal',      placeholder: '28001' },
@@ -65,7 +66,7 @@ const FIELDS = [
 export default function Checkout() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { getAccessTokenSilently } = useAuth0();
+  const { isAuthenticated, isLoading: authLoading, getAccessTokenSilently, loginWithRedirect } = useAuth0();
   const { items, subtotal, clearCart } = useCart();
 
   const shippingMethod = state?.shippingMethod || 'standard';
@@ -77,7 +78,7 @@ export default function Checkout() {
   const [clientSecret, setClientSecret] = useState(null);
   const [stripeObj, setStripeObj]     = useState(null);
   const [address, setAddress]         = useState({
-    fullName: '', street: '', city: '', postalCode: '', country: 'España',
+    fullName: '', email: '', street: '', city: '', postalCode: '', country: 'España',
   });
 
   if (!items.length) {
@@ -93,11 +94,23 @@ export default function Checkout() {
     e.preventDefault();
     setBusy(true);
     try {
-      const token   = await getAccessTokenSilently();
-      const headers = { Authorization: `Bearer ${token}` };
+      // Si hay sesión Auth0, mandamos el token; si no, el backend trata la compra como invitado
+      // (requiere email en el body) y devuelve un guest_token que reenviamos en los pasos siguientes.
+      const headers = {};
+      if (isAuthenticated) {
+        const token = await getAccessTokenSilently();
+        headers.Authorization = `Bearer ${token}`;
+      }
 
       // 1. Create draft order
-      const { data: order } = await axios.post('/api/orders', {}, { headers });
+      const createBody = isAuthenticated
+        ? {}
+        : { guestEmail: address.email, guestName: address.fullName };
+      const { data: order } = await axios.post('/api/orders', createBody, { headers });
+
+      if (order.guest_token) {
+        headers['X-Guest-Token'] = order.guest_token;
+      }
 
       // 2. Add items
       for (const item of items) {
@@ -140,6 +153,15 @@ export default function Checkout() {
     <div className="max-w-5xl mx-auto px-6 py-12">
       <h1 className="font-display text-4xl text-arg-blue-dk tracking-wider mb-2">CHECKOUT</h1>
 
+      {!authLoading && !isAuthenticated && (
+        <p className="text-sm text-gray-400 mb-6">
+          Comprando como invitado.{' '}
+          <button type="button" onClick={() => loginWithRedirect()} className="text-arg-blue hover:underline">
+            ¿Ya tenés cuenta? Iniciá sesión
+          </button>
+        </p>
+      )}
+
       {/* Steps indicator */}
       <div className="flex items-center gap-3 mb-8">
         {[
@@ -169,7 +191,7 @@ export default function Checkout() {
                   <div key={f.key}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
                     <input
-                      type="text"
+                      type={f.type || 'text'}
                       required
                       placeholder={f.placeholder}
                       value={address[f.key]}
