@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
+import { proxyImageUrl } from '../lib/images';
 
 const FALLBACK_IMG = 'https://placehold.co/80x80/74ACDF/FFFFFF?text=ARG';
 
@@ -54,7 +55,7 @@ export default function Cart() {
           {items.map(item => (
             <div key={item.variantId} className="card p-4 flex items-center gap-4">
               <img
-                src={item.imageUrl || FALLBACK_IMG}
+                src={proxyImageUrl(item.imageUrl) || FALLBACK_IMG}
                 alt={item.productName}
                 className="w-20 h-20 object-cover rounded-xl shrink-0"
                 onError={e => { e.target.src = FALLBACK_IMG; }}

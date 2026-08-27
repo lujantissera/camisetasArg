@@ -8,6 +8,7 @@ const ordersRouter = require('./routes/orders');
 const customersRouter = require('./routes/customers');
 const paymentsRouter = require('./routes/payments');
 const shippingRouter = require('./routes/shipping');
+const imageProxyRouter = require('./routes/imageProxy');
 const adminRouter = require('./routes/admin');
 const { scrapeAuth } = require('./middleware/scrapeAuth');
 const webhooksController = require('./controllers/webhooks.controller');
@@ -30,6 +31,7 @@ initDB().catch(err => {
 app.use('/api/products', productsRouter);
 app.use('/api/payments', paymentsRouter); // solo expone la publishable key de Stripe
 app.use('/api/shipping-options', shippingRouter);
+app.use('/api/image-proxy', imageProxyRouter); // sirve las fotos on-demand evitando el bloqueo anti-hotlink de Yupoo
 
 // Auth opcional: adjunta req.customer si hay sesión Auth0, sigue sin ella si no (invitado).
 // Cada router decide internamente qué rutas exigen requireAuth (ver routes/orders.js y routes/customers.js).

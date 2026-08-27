@@ -2,12 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useCart } from '../context/CartContext';
+import { proxyImageUrl } from '../lib/images';
 
 const FALLBACK_IMG = 'https://placehold.co/400x320/74ACDF/FFFFFF?text=Camiseta';
 
 function ProductCarousel({ images, alt }) {
   const [index, setIndex] = useState(0);
-  const photos = images && images.length > 0 ? images : [FALLBACK_IMG];
+  const photos = images && images.length > 0 ? images.map(proxyImageUrl) : [FALLBACK_IMG];
 
   function prev(e) {
     e.stopPropagation();
