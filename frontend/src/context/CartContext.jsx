@@ -29,7 +29,7 @@ export function CartProvider({ children }) {
           variantId:   variant.id,
           productId:   product.id,
           productName: product.name,
-          imageUrl:    product.image_url,
+          imageUrl:    product.image_urls?.[0] || null,
           size:        variant.size,
           price:       product.price,
           quantity,

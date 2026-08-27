@@ -33,7 +33,7 @@ async function getFullOrder(orderId) {
   const { rows: items } = await db.execute({
     sql: `SELECT oi.id, oi.quantity, oi.unit_price,
                  pv.size,
-                 p.id AS product_id, p.name AS product_name, p.club, p.image_url
+                 p.id AS product_id, p.name AS product_name, p.club, p.image_urls
           FROM order_items oi
           JOIN product_variants pv ON oi.variant_id = pv.id
           JOIN products p ON pv.product_id = p.id

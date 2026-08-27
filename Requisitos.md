@@ -40,33 +40,39 @@ Fuente de fotos: [carpeta de Google Drive](https://drive.google.com/drive/folder
 | Racing Home Retro | Racing Club | Retro | XL: 1 | 25€ (provisorio) |
 | Slo Home | San Lorenzo | Titular | XL: 1 | 25€ (provisorio) |
 | Slo Away | San Lorenzo | Suplente | XXL: 1 | 25€ (provisorio) |
+| Short Home | Selección Argentina | Short adidas Climacool | M: 1, L: 1 | 25€ (provisorio) |
+| Thrasher x Selección Argentina | Selección Argentina | Edición especial (colab. Thrasher Revista) | XL: 5, XXL: 4 | 25€ (provisorio) |
 
 ### 3.2 Pendientes de fotos/detalle (ya están en la planilla, faltan fotos o definir club/modelo)
 
 | Producto (Tipo en planilla) | Categoría | Talles y stock | Estado |
 |---|---|---|---|
-| TRASHER | Camiseta (club/modelo a definir) | XL: 5, XXL: 4 | **[ABIERTO]** — Luján va a pasar fotos |
 | Entrenamiento | Ropa de entrenamiento (no es camiseta de partido) | XL: 2, XXL: 1 | **[ABIERTO]** — Luján va a pasar fotos |
-| Short Home | Short (categoría distinta a camiseta) | M: 1, L: 1 | **[ABIERTO]** — Luján va a pasar fotos |
 
 > **Descartado del catálogo:** "PEDIDO DOLAPE" — es un pedido puntual a proveedor, no un producto de catálogo.
 
 ### 3.3 Discrepancia a revisar
 
-Al organizar las fotos de Drive aparecieron dos grupos — **River rayada** (4 fotos) y **Racing suplente** (4 fotos) — que **no** figuran como stock en la planilla. Puede ser que sean fotos de productos que faltan cargar a la planilla, o fotos mal agrupadas (ver detalle de ambigüedades más abajo). **[ABIERTO — a confirmar con Luján]**.
+Al organizar las fotos de Drive apareció un grupo — **River rayada** (carpeta `03-river-rayada`, 4 fotos) — que **no** figura como stock en la planilla. Puede ser una foto de un producto que falta cargar a la planilla, o fotos mal agrupadas. **[ABIERTO — a confirmar con Luján]**. (La otra discrepancia que había, "Racing suplente", ya se resolvió — ver 3.4: es "Racing away retro".)
 
-### 3.4 Fotos organizadas en Drive (resultado del agente)
+### 3.4 Fotos organizadas en Drive → productos (confirmado por Luján)
 
-| Carpeta | Fotos | Mapea a |
-|---|---|---|
-| 01-river-retro | 7 | River 125th |
-| 02-river-titular-26 | 4 | River Home Player Version |
-| 03-river-rayada | 4 | **sin match en planilla** (ver 3.3) |
-| 04-sanlorenzo-titular-26 | 6 | Slo Home |
-| 05-sanlorenzo-suplente-26 | 5 | Slo Away |
-| 06-racing-titular-26 | 3 | Racing Home Player Version |
-| 07-racing-suplente-26 | 4 | **sin match en planilla** (ver 3.3) |
-| 08-racing-rayada | 5 | Racing Home Retro (a confirmar) |
+| Carpeta | Fotos | Producto | Estado |
+|---|---|---|---|
+| 01-river-retro | 7 | River 125th | ✅ cargadas en el sitio |
+| 02-river-titular-26 | 4 | River Home Player Version | ✅ cargadas en el sitio |
+| 03-river-rayada | 4 | **sin match en planilla** (ver 3.3) | pendiente |
+| 04-sanlorenzo-titular-26 | 6 | Slo Home | ✅ cargadas en el sitio |
+| 05-sanlorenzo-suplente-26 | 5 | Slo Away | ✅ cargadas en el sitio |
+| 06-racing-titular-26 | 3 | Racing Home Player Version | ✅ cargadas en el sitio |
+| 07-racing-suplente-26 | 4 | **Racing away retro** (producto nuevo, confirmado por Luján) | fotos listas, **[ABIERTO]** falta talles/stock para sumarlo al catálogo |
+| 08-racing-rayada | 5 | Racing Home Retro | ✅ cargadas en el sitio |
+| 06-shorts-Argentina | 5 | Short Home | ✅ cargadas en el sitio |
+| 10-trusthes | 4 (2 duplicadas, 3 fotos únicas) | Thrasher x Selección Argentina | ✅ cargadas en el sitio |
+
+"TRASHER" resultó ser una camiseta de la Selección Argentina, edición especial en colaboración con **Thrasher Revista** (adidas/AFA oficial) — no es un club ni un modelo a definir, se renombró a "Thrasher x Selección Argentina" para que quede claro en el catálogo. "Short Home" es un short oficial adidas Climacool de la Selección (no de un club).
+
+Las fotos se guardaron localmente en `frontend/public/images/products/<slug>/` (no como links a Drive, para no depender de que Google mantenga el link vivo) y cada producto las muestra en un carrusel dentro de su card en `/shop`.
 
 Nota: dentro de "02-river-titular-26" el agente detectó 3 variantes visualmente distintas (sponsor "Betano" simple, versión jacquard, y versión "DIRECTV"/125 años) agrupadas como un solo producto — a confirmar si son la misma "River Home Player Version" o productos separados.
 
@@ -124,8 +130,9 @@ Esquema actual (`customers`, `products`, `product_variants`, `orders`, `order_it
 ## 8. Pendiente / próximos pasos
 
 1. **[ABIERTO]** Definir sitio a scrapear para on-demand.
-2. **[ABIERTO]** Resolver discrepancia River rayada / Racing suplente (fotos sin match en planilla, ver 3.3).
-3. **[ABIERTO]** Fotos y detalle de club/modelo para TRASHER, Entrenamiento y Short Home (Luján las va a pasar).
+2. **[ABIERTO]** Resolver discrepancia River rayada (fotos sin match en planilla, ver 3.3).
+3. **[ABIERTO]** Fotos y detalle de club/modelo para "Entrenamiento" (Luján las va a pasar). TRASHER y Short Home ya resueltos — ✅ hecho.
+3b. **[ABIERTO]** Talles y stock de "Racing away retro" (nuevo producto confirmado, fotos ya cargadas — ver 3.4) para sumarlo al catálogo.
 4. Organizar las fotos de Google Drive por producto (carpeta por club+versión) — ✅ hecho.
 5. Definir costos y zonas de envío (¿solo España? ¿Europa?) **[ABIERTO]**.
 6. Definir si van a facturar como empresa (IVA, factura a clientes) o venta informal **[ABIERTO]** — afecta checkout y contabilidad.
@@ -133,6 +140,6 @@ Esquema actual (`customers`, `products`, `product_variants`, `orders`, `order_it
 8. Migrar backend: `better-sqlite3` → `@libsql/client` (Turso) — ✅ hecho y probado en local (falta crear la cuenta de Turso real para producción, ver README).
 9. Hacer Auth0 opcional (checkout invitado + con cuenta) — ✅ hecho, probado end-to-end como invitado.
 10. Adaptar frontend: nuevo catálogo con club/versión/categoría, talles dinámicos por producto, filtro por club — ✅ hecho.
-11. **[ABIERTO]** Cargar imágenes reales de los productos (hoy `image_url` está vacío) — subir las fotos ya organizadas en Drive a algún hosting (ver 3.4).
+11. Cargar imágenes reales de los productos — ✅ hecho: fotos guardadas en `frontend/public/images/products/`, con carrusel por producto en `/shop` (ver 3.4).
 12. **[ABIERTO]** Cargar claves reales de Stripe en `backend/.env` para poder probar un pago de punta a punta (hoy están con valores de ejemplo).
 13. Toggle stock vs on-demand en el frontend — no implementado todavía, depende de definir la modalidad on-demand (sección 2.2, sigue abierta).

@@ -40,7 +40,7 @@ const SCHEMA_STATEMENTS = [
     version     TEXT,
     type        TEXT NOT NULL DEFAULT 'stock' CHECK(type IN ('stock','on_demand')),
     source_url  TEXT,
-    image_url   TEXT,
+    image_urls  TEXT NOT NULL DEFAULT '[]',
     price       REAL NOT NULL DEFAULT 25.0,
     active      INTEGER DEFAULT 1,
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP

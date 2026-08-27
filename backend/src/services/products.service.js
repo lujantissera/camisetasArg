@@ -3,6 +3,16 @@ const { getDB } = require('../db/database');
 const SIZE_ORDER = { XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6, XXXL: 7 };
 const bySize = (a, b) => (SIZE_ORDER[a.size] || 99) - (SIZE_ORDER[b.size] || 99);
 
+function withParsedImages(product) {
+  let image_urls = [];
+  try {
+    image_urls = JSON.parse(product.image_urls || '[]');
+  } catch {
+    image_urls = [];
+  }
+  return { ...product, image_urls };
+}
+
 async function getAllProducts() {
   const db = getDB();
   const { rows: products } = await db.execute('SELECT * FROM products WHERE active = 1 ORDER BY id');
@@ -21,7 +31,7 @@ async function getAllProducts() {
   }
 
   return products.map(p => ({
-    ...p,
+    ...withParsedImages(p),
     variants: (variantsByProduct[p.id] || []).sort(bySize),
   }));
 }
@@ -37,7 +47,7 @@ async function getProductById(id) {
     args: [product.id],
   });
 
-  return { ...product, variants: variants.sort(bySize) };
+  return { ...withParsedImages(product), variants: variants.sort(bySize) };
 }
 
 module.exports = { getAllProducts, getProductById };

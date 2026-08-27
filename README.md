@@ -181,7 +181,7 @@ npm run dev        # http://localhost:5173
 
 ```
 customers        — auth0_id, email, name, phone
-products         — name, description, club, category, version, type, price, image_url
+products         — name, description, club, category, version, type, price, image_urls (JSON array)
 product_variants — product_id, size (XS–XXXL), stock
 orders           — customer_id (nullable), guest_email/name/phone/token, status, shipping_*, totals, stripe_*
 order_items      — order_id, variant_id, quantity, unit_price
@@ -213,5 +213,7 @@ CVC:      cualquier 3 dígitos
 | Racing Club | Racing Home Retro | Retro | XL | €25 |
 | San Lorenzo | Slo Home | Titular | XL | €25 |
 | San Lorenzo | Slo Away | Suplente | XXL | €25 |
+| Selección Argentina | Short Home | — | M, L | €25 |
+| Selección Argentina | Thrasher x Selección Argentina | Edición especial | XL, XXL | €25 |
 
-Precio de 25€ parejo es provisorio — ver Requisitos.md para ajustarlo por producto. Fotos pendientes de subir (ver carpeta de Drive organizada en Requisitos.md §3.4).
+Precio de 25€ parejo es provisorio — ver Requisitos.md para ajustarlo por producto. Fotos ya cargadas en `frontend/public/images/products/` (ver Requisitos.md §3.4), con carrusel por producto en `/shop`.

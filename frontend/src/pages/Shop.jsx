@@ -5,6 +5,54 @@ import { useCart } from '../context/CartContext';
 
 const FALLBACK_IMG = 'https://placehold.co/400x320/74ACDF/FFFFFF?text=Camiseta';
 
+function ProductCarousel({ images, alt }) {
+  const [index, setIndex] = useState(0);
+  const photos = images && images.length > 0 ? images : [FALLBACK_IMG];
+
+  function prev(e) {
+    e.stopPropagation();
+    setIndex(i => (i - 1 + photos.length) % photos.length);
+  }
+  function next(e) {
+    e.stopPropagation();
+    setIndex(i => (i + 1) % photos.length);
+  }
+
+  return (
+    <div className="relative overflow-hidden group">
+      <img
+        src={photos[index]}
+        alt={alt}
+        className="w-full h-60 object-cover"
+        onError={e => { e.target.src = FALLBACK_IMG; }}
+      />
+
+      {photos.length > 1 && (
+        <>
+          <button
+            onClick={prev}
+            aria-label="Foto anterior"
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-700 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"
+          >‹</button>
+          <button
+            onClick={next}
+            aria-label="Foto siguiente"
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-700 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"
+          >›</button>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {photos.map((_, i) => (
+              <span
+                key={i}
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${i === index ? 'bg-white' : 'bg-white/50'}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function ProductCard({ product }) {
   const { addToCart } = useCart();
   const [selectedSize, setSelectedSize] = useState(null);
@@ -21,18 +69,13 @@ function ProductCard({ product }) {
 
   return (
     <div className="card overflow-hidden flex flex-col">
-      <div className="relative overflow-hidden">
-        <img
-          src={product.image_url || FALLBACK_IMG}
-          alt={product.name}
-          className="w-full h-60 object-cover transition-transform duration-500 hover:scale-105"
-          onError={e => { e.target.src = FALLBACK_IMG; }}
-        />
-        <div className="absolute top-3 right-3 bg-arg-gold text-white font-bold px-3 py-1 rounded-full text-sm shadow">
+      <div className="relative">
+        <ProductCarousel images={product.image_urls} alt={product.name} />
+        <div className="absolute top-3 right-3 bg-arg-gold text-white font-bold px-3 py-1 rounded-full text-sm shadow pointer-events-none">
           €{product.price.toFixed(2)}
         </div>
         {product.club && (
-          <div className="absolute top-3 left-3 bg-white/90 text-arg-blue-dk font-semibold px-3 py-1 rounded-full text-xs shadow">
+          <div className="absolute top-3 left-3 bg-white/90 text-arg-blue-dk font-semibold px-3 py-1 rounded-full text-xs shadow pointer-events-none">
             {product.club}
           </div>
         )}
