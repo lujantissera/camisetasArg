@@ -83,10 +83,18 @@ const SCHEMA_STATEMENTS = [
     FOREIGN KEY (order_id)   REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (variant_id) REFERENCES product_variants(id)
   )`,
+  // Parcial: no aplica a los productos de stock sembrados a mano (source_url NULL).
+  // Permite upsert idempotente del catálogo on-demand scrapeado por source_url.
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_products_source_url
+    ON products(source_url) WHERE source_url IS NOT NULL`,
 ];
 
 async function initDB() {
   const db = getDB();
+  // La migración a @libsql/client se había olvidado este pragma — sin él, las FK no se
+  // enforcean (better-sqlite3 sí lo tenía). Necesario para que el upsert on-demand nunca
+  // pueda romper silenciosamente order_items históricos.
+  await db.execute('PRAGMA foreign_keys = ON');
   for (const statement of SCHEMA_STATEMENTS) {
     await db.execute(statement);
   }

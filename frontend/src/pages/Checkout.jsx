@@ -72,6 +72,8 @@ export default function Checkout() {
   const shippingMethod = state?.shippingMethod || 'standard';
   const shippingCost   = state?.shippingCost   ?? 5;
   const grandTotal     = subtotal + shippingCost;
+  const hasStock        = items.some(i => i.type === 'stock');
+  const hasOnDemand     = items.some(i => i.type === 'on_demand');
 
   const [step, setStep]               = useState('address'); // 'address' | 'payment'
   const [busy, setBusy]               = useState(false);
@@ -225,11 +227,21 @@ export default function Checkout() {
         {/* Right: order summary */}
         <div className="lg:col-span-2 card p-6 h-fit">
           <h2 className="font-bold text-xl text-gray-800 mb-4">Resumen del pedido</h2>
+
+          {hasStock && hasOnDemand && (
+            <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+              ℹ️ Incluye productos en stock y a pedido — llegan por separado (5 días / ~20 días).
+            </div>
+          )}
+
           <div className="space-y-2 mb-4">
             {items.map(item => (
               <div key={item.variantId} className="flex justify-between text-sm">
                 <span className="text-gray-500">
                   {item.productName} ({item.size}) × {item.quantity}
+                  <span className={item.type === 'on_demand' ? 'text-amber-600' : 'text-green-600'}>
+                    {' '}{item.type === 'on_demand' ? '· 🕒 20 días' : '· 📦 5 días'}
+                  </span>
                 </span>
                 <span className="font-medium text-gray-700">
                   €{(item.price * item.quantity).toFixed(2)}

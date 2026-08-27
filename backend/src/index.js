@@ -8,6 +8,8 @@ const ordersRouter = require('./routes/orders');
 const customersRouter = require('./routes/customers');
 const paymentsRouter = require('./routes/payments');
 const shippingRouter = require('./routes/shipping');
+const adminRouter = require('./routes/admin');
+const { scrapeAuth } = require('./middleware/scrapeAuth');
 const webhooksController = require('./controllers/webhooks.controller');
 
 const app = express();
@@ -33,6 +35,9 @@ app.use('/api/shipping-options', shippingRouter);
 // Cada router decide internamente qué rutas exigen requireAuth (ver routes/orders.js y routes/customers.js).
 app.use('/api/orders', checkJwt, attachCustomer, ordersRouter);
 app.use('/api/customers', checkJwt, attachCustomer, requireAuth, customersRouter); // perfil: siempre requiere cuenta
+
+// Trigger del scraper on-demand — protegido por secreto compartido, lo llama el cron de GitHub Actions.
+app.use('/api/admin', scrapeAuth, adminRouter);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 

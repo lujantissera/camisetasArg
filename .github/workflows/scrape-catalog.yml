@@ -1,0 +1,16 @@
+name: Actualizar catálogo on-demand
+
+on:
+  schedule:
+    # 06:00 UTC todos los días — ajustar si hace falta otro horario.
+    - cron: '0 6 * * *'
+  workflow_dispatch: {} # permite dispararlo a mano desde la pestaña Actions de GitHub
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar scrape en el backend
+        run: |
+          curl -sf -X POST "${{ secrets.BACKEND_URL }}/api/admin/scrape" \
+            -H "X-Scrape-Secret: ${{ secrets.SCRAPE_SECRET }}"

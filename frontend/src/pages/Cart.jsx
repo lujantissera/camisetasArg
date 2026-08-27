@@ -17,6 +17,8 @@ export default function Cart() {
 
   const shipping = shippingOptions.find(o => o.id === shippingId);
   const total = subtotal + (shipping?.price || 0);
+  const hasStock = items.some(i => i.type === 'stock');
+  const hasOnDemand = items.some(i => i.type === 'on_demand');
 
   if (items.length === 0) {
     return (
@@ -35,9 +37,16 @@ export default function Cart() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
-      <h1 className="font-display text-4xl text-arg-blue-dk tracking-wider mb-8">
+      <h1 className="font-display text-4xl text-arg-blue-dk tracking-wider mb-4">
         TU CARRITO ({itemCount})
       </h1>
+
+      {hasStock && hasOnDemand && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
+          ℹ️ Tu pedido mezcla productos en stock y a pedido — te van a llegar por separado, con
+          tiempos de entrega distintos (hasta 5 días los de stock, ~20 días los de pedido).
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Item list */}
@@ -54,6 +63,9 @@ export default function Cart() {
                 <p className="font-semibold text-gray-800 truncate">{item.productName}</p>
                 <p className="text-sm text-gray-400">Talle: <strong>{item.size}</strong></p>
                 <p className="text-arg-gold font-bold text-sm mt-0.5">€{item.price.toFixed(2)} c/u</p>
+                <p className={`text-xs mt-0.5 ${item.type === 'on_demand' ? 'text-amber-600' : 'text-green-600'}`}>
+                  {item.type === 'on_demand' ? '🕒 A pedido — 20 días' : '📦 En stock — 5 días'}
+                </p>
               </div>
 
               {/* Qty stepper */}

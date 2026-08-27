@@ -32,6 +32,7 @@ export function CartProvider({ children }) {
           imageUrl:    product.image_urls?.[0] || null,
           size:        variant.size,
           price:       product.price,
+          type:        product.type,
           quantity,
         },
       ];

@@ -83,7 +83,11 @@ function ProductCard({ product }) {
 
       <div className="p-5 flex flex-col flex-1">
         <h3 className="font-bold text-gray-800 mb-1 text-base leading-snug">{product.name}</h3>
-        <p className="text-sm text-gray-400 mb-4 flex-1 line-clamp-2">{product.description}</p>
+        <p className="text-sm text-gray-400 mb-2 flex-1 line-clamp-2">{product.description}</p>
+
+        <p className={`text-xs font-medium mb-4 ${product.type === 'on_demand' ? 'text-amber-600' : 'text-green-600'}`}>
+          {product.type === 'on_demand' ? '🕒 Entrega estimada: 20 días (a pedido)' : '📦 Entrega en hasta 5 días (en stock)'}
+        </p>
 
         {/* Size selector — tallas dinámicas, cada producto puede tener un set distinto */}
         <div className="mb-4">
@@ -125,6 +129,7 @@ function ProductCard({ product }) {
 export default function Shop() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [typeFilter, setTypeFilter] = useState('stock'); // 'stock' | 'on_demand'
   const [clubFilter, setClubFilter] = useState('all');
 
   useEffect(() => {
@@ -134,12 +139,14 @@ export default function Shop() {
       .finally(() => setLoading(false));
   }, []);
 
+  const byType = useMemo(() => products.filter(p => p.type === typeFilter), [products, typeFilter]);
+
   const clubs = useMemo(
-    () => [...new Set(products.map(p => p.club).filter(Boolean))],
-    [products]
+    () => [...new Set(byType.map(p => p.club).filter(Boolean))],
+    [byType]
   );
 
-  const filtered = clubFilter === 'all' ? products : products.filter(p => p.club === clubFilter);
+  const filtered = clubFilter === 'all' ? byType : byType.filter(p => p.club === clubFilter);
 
   if (loading) {
     return (
@@ -155,7 +162,30 @@ export default function Shop() {
         <h1 className="font-display text-5xl text-arg-blue-dk tracking-wider mb-2">
           NUESTRA COLECCIÓN
         </h1>
-        <p className="text-gray-400">Camisetas de clubes argentinos, stock disponible para entrega inmediata</p>
+        <p className="text-gray-400">
+          {typeFilter === 'stock'
+            ? 'Camisetas de clubes argentinos, stock disponible para entrega inmediata'
+            : 'Camisetas a pedido — se encargan tras la compra, entrega estimada 20 días'}
+        </p>
+      </div>
+
+      <div className="flex justify-center mb-8">
+        <div className="inline-flex rounded-xl border-2 border-gray-200 p-1">
+          {[
+            { id: 'stock', label: '📦 En stock' },
+            { id: 'on_demand', label: '🕒 A pedido' },
+          ].map(opt => (
+            <button
+              key={opt.id}
+              onClick={() => { setTypeFilter(opt.id); setClubFilter('all'); }}
+              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                typeFilter === opt.id ? 'bg-arg-blue text-white' : 'text-gray-500 hover:text-arg-blue'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {clubs.length > 1 && (

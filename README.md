@@ -36,12 +36,19 @@ camisetasArg/
 │   │   │   └── auth.js       # Auth0 opcional (checkJwt + attachCustomer + requireAuth)
 │   │   ├── utils/
 │   │   │   └── asyncHandler.js
+│   │   ├── scraper/           # catálogo on-demand (Yupoo → products con type='on_demand')
+│   │   │   ├── config.js      # diccionarios ES↔ZH, categorías, precio/stock/entrega fijos
+│   │   │   ├── yupooClient.js # fetch + cheerio del sitio fuente
+│   │   │   ├── titleParser.js # título en chino → nombre/club/versión en español
+│   │   │   ├── run.js         # orquestador (scrapeAndUpsert)
+│   │   │   └── cli.js         # entrypoint de `npm run scrape`
 │   │   ├── routes/
 │   │   │   ├── products.js   # GET /api/products
 │   │   │   ├── orders.js     # CRUD órdenes + confirm (invitado o cuenta)
 │   │   │   ├── customers.js  # perfil del cliente (requiere cuenta)
 │   │   │   ├── payments.js   # Stripe publishable key
-│   │   │   └── shipping.js   # opciones de envío
+│   │   │   ├── shipping.js   # opciones de envío
+│   │   │   └── admin.js      # POST /api/admin/scrape (protegido, dispara el scraper)
 │   │   └── index.js
 │   ├── .env.example
 │   └── package.json
@@ -57,6 +64,8 @@ camisetasArg/
 │   │       └── Orders.jsx    # requiere cuenta
 │   ├── .env.example
 │   └── package.json
+├── .github/workflows/
+│   └── scrape-catalog.yml    # cron diario que dispara /api/admin/scrape
 └── data/
     └── shop.db               # solo en dev local, creado automáticamente
 ```
@@ -104,7 +113,17 @@ stripe listen --forward-to http://localhost:3001/api/webhook
 # Copiá el "webhook signing secret" que aparece (whsec_...)
 ```
 
-### 4. Variables de entorno
+### 4. Catálogo on-demand (scraping)
+
+El scraper corre manual en dev (`npm run scrape`, ver más abajo) sin configuración extra. Para que corra solo todos los días en producción:
+
+1. Generá un secreto random cualquiera (ej. `openssl rand -hex 24`) y ponelo como `SCRAPE_SECRET` en las variables de entorno de Render (el mismo valor que en `backend/.env`).
+2. En GitHub: **Settings → Secrets and variables → Actions**, agregá:
+   - `SCRAPE_SECRET` — el mismo valor de arriba.
+   - `BACKEND_URL` — la URL pública del backend en Render (ej. `https://camisetas-arg-backend.onrender.com`, sin barra al final).
+3. El workflow `.github/workflows/scrape-catalog.yml` ya está armado — corre todos los días a las 06:00 UTC, y también se puede disparar a mano desde la pestaña **Actions** de GitHub (`workflow_dispatch`).
+
+### 5. Variables de entorno
 
 **Backend** — copiar `.env.example` a `.env` y completar:
 ```env
@@ -117,6 +136,7 @@ AUTH0_AUDIENCE=https://camisetas-arg-api
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+SCRAPE_SECRET=cualquier-string-random-largo
 ```
 
 **Frontend** — copiar `.env.example` a `.env` y completar:
@@ -134,7 +154,8 @@ VITE_AUTH0_AUDIENCE=https://camisetas-arg-api
 # Backend
 cd backend
 npm install
-npm run seed       # poblar DB con el catálogo real (6 camisetas)
+npm run seed       # poblar DB con el catálogo de stock (8 camisetas)
+npm run scrape     # poblar/actualizar el catálogo on-demand (27 productos de Yupoo)
 npm run dev        # http://localhost:3001
 
 # Frontend (en otra terminal)
@@ -175,6 +196,11 @@ npm run dev        # http://localhost:5173
 | GET | `/api/customers/me` | Perfil del cliente |
 | PUT | `/api/customers/me` | Actualizar perfil |
 
+### Protegido por secreto compartido (header `X-Scrape-Secret`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/admin/scrape` | Dispara el scraper on-demand (async, responde 202 al toque) — lo llama el cron de GitHub Actions |
+
 ---
 
 ## Base de datos (SQLite / Turso)
@@ -203,7 +229,7 @@ CVC:      cualquier 3 dígitos
 
 ---
 
-## Productos incluidos (seed)
+## Productos de stock incluidos (`npm run seed`)
 
 | Club | Producto | Versión | Talles | Precio |
 |------|----------|---------|--------|--------|
@@ -217,3 +243,5 @@ CVC:      cualquier 3 dígitos
 | Selección Argentina | Thrasher x Selección Argentina | Edición especial | XL, XXL | €25 |
 
 Precio de 25€ parejo es provisorio — ver Requisitos.md para ajustarlo por producto. Fotos ya cargadas en `frontend/public/images/products/` (ver Requisitos.md §3.4), con carrusel por producto en `/shop`.
+
+El catálogo **on-demand** (27 productos: Selección Argentina + River Plate + Boca Juniors, 20€ fijo) no se siembra a mano — se puebla corriendo `npm run scrape` (ver sección 4 de Configuración).

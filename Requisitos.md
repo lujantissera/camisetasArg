@@ -16,13 +16,15 @@ Volumen esperado: **bajo caudal de clientes**. Esto es una decisión de diseño 
 - Entrega en **máximo 5 días**.
 - Catálogo inicial de 8 productos (ver sección 3).
 
-### 2.2 Compra on-demand (pedido a demanda)
+### 2.2 Compra on-demand (pedido a demanda) — ✅ implementado
 - Productos que **no** están en stock; se encargan tras la compra.
-- Precio más bajo (sin costo de mantener stock).
-- Plazo de entrega mayor **[ABIERTO — definir cuánto: 2-3 semanas? depende del proveedor]**.
-- El catálogo se arma scrapeando una web externa de referencia.
-- **Sitio a scrapear: [ABIERTO]** — a definir en una próxima conversación.
-- **Modo de scraping:** catálogo cacheado. Un proceso programado (cron, ej. 1 vez/día) trae los productos/precios del sitio externo y los guarda en nuestra base. La tienda nunca depende de que el sitio externo esté online en el momento de la compra. Evita golpear el sitio externo en cada visita (más rápido, más robusto, menor riesgo de bloqueo por scraping).
+- **Precio: 20€ fijo** para todos los productos on-demand.
+- **Plazo de entrega: mensaje fijo de "Entrega estimada: 20 días"** en la ficha de producto, el carrito y el checkout.
+- **Sitio scrapeado:** https://classic-football-fhirts052.x.yupoo.com/ — catálogo mayorista en Yupoo (proveedor chino). Alcance acotado a **Selección Argentina + River Plate + Boca Juniors (27 productos)**, no el resto del sitio (cientos de productos de otros países, fuera de la identidad de la marca).
+  - ⚠️ **Riesgo legal marcado y aceptado por Luján:** el sitio usa nomenclatura típica de réplicas (grados de calidad tipo "8A", "5A", "3B"), lo que indica que son camisetas no oficiales/falsificadas. Revender esto en España implica riesgo real de infracción de marca (retención en aduana, multas, posible responsabilidad legal en venta a escala comercial). Luján decidió seguir adelante de todas formas — decisión de negocio, no técnica.
+- **Modo de scraping:** catálogo cacheado (`backend/src/scraper/`). Upsert por `source_url` — nunca borra productos (los desactiva con `active=0` si desaparecen del sitio fuente), así que un re-scrapeo nunca rompe pedidos históricos. Imágenes hotlinkeadas directo del CDN de Yupoo (no se re-hostean, a diferencia de las fotos de stock).
+- **Automatización:** GitHub Actions (`.github/workflows/scrape-catalog.yml`, cron diario 06:00 UTC) dispara `POST /api/admin/scrape` en el backend, protegido por secreto compartido. **Pendiente que Luján configure los secrets** `BACKEND_URL` y `SCRAPE_SECRET` en GitHub (Settings → Secrets → Actions) una vez que el backend esté desplegado en Render, y la misma `SCRAPE_SECRET` como variable de entorno en Render — ver README.
+- Frontend: toggle "En stock" / "A pedido" en `/shop`; si el carrito mezcla ambos tipos, se muestra un aviso de que llegan por separado (resuelve la pregunta abierta de §4.2).
 
 ## 3. Catálogo inicial (stock instantáneo)
 
@@ -65,7 +67,7 @@ Al organizar las fotos de Drive apareció un grupo — **River rayada** (carpeta
 | 04-sanlorenzo-titular-26 | 6 | Slo Home | ✅ cargadas en el sitio |
 | 05-sanlorenzo-suplente-26 | 5 | Slo Away | ✅ cargadas en el sitio |
 | 06-racing-titular-26 | 3 | Racing Home Player Version | ✅ cargadas en el sitio |
-| 07-racing-suplente-26 | 4 | **Racing away retro** (producto nuevo, confirmado por Luján) | fotos listas, **[ABIERTO]** falta talles/stock para sumarlo al catálogo |
+| 07-racing-suplente-26 | 4 | **Racing Away Player Version** (producto nuevo, confirmado por Luján) | fotos listas, **sin stock actualmente** — no se suma al catálogo hasta que haya unidades |
 | 08-racing-rayada | 5 | Racing Home Retro | ✅ cargadas en el sitio |
 | 06-shorts-Argentina | 5 | Short Home | ✅ cargadas en el sitio |
 | 10-trusthes | 4 (2 duplicadas, 3 fotos únicas) | Thrasher x Selección Argentina | ✅ cargadas en el sitio |
@@ -78,13 +80,13 @@ Nota: dentro de "02-river-titular-26" el agente detectó 3 variantes visualmente
 
 ## 4. Requisitos funcionales
 
-### 4.1 Catálogo
-- Listado de productos con filtro por club y por modalidad (stock / on-demand).
-- Ficha de producto: fotos, club, versión, talles, precio, plazo de entrega, stock disponible (si aplica).
+### 4.1 Catálogo — ✅ implementado
+- Listado de productos con filtro por club y por modalidad (stock / on-demand) — toggle en `/shop`.
+- Ficha de producto: fotos (carrusel), club, versión, talles, precio, plazo de entrega.
 
-### 4.2 Carrito
+### 4.2 Carrito — ✅ implementado
 - Agregar/quitar productos y talles.
-- El carrito puede mezclar ítems de stock y on-demand en el mismo pedido **[ABIERTO — confirmar si se permite, o si se separan en pedidos distintos por tener plazos de entrega distintos]**.
+- El carrito **sí puede mezclar** ítems de stock y on-demand — se permite, y se muestra un aviso de que llegan por separado con tiempos distintos (no se bloquea ni se separa en pedidos distintos).
 
 ### 4.3 Checkout
 - **Ambas modalidades:** compra como invitado (nombre, email, dirección) **o** con cuenta (login).
@@ -129,10 +131,10 @@ Esquema actual (`customers`, `products`, `product_variants`, `orders`, `order_it
 
 ## 8. Pendiente / próximos pasos
 
-1. **[ABIERTO]** Definir sitio a scrapear para on-demand.
+1. Sitio a scrapear + scraper on-demand — ✅ hecho (ver 2.2), probado end-to-end (27 productos, upsert seguro verificado con un pedido real que sobrevivió a un re-scrapeo).
 2. **[ABIERTO]** Resolver discrepancia River rayada (fotos sin match en planilla, ver 3.3).
 3. **[ABIERTO]** Fotos y detalle de club/modelo para "Entrenamiento" (Luján las va a pasar). TRASHER y Short Home ya resueltos — ✅ hecho.
-3b. **[ABIERTO]** Talles y stock de "Racing away retro" (nuevo producto confirmado, fotos ya cargadas — ver 3.4) para sumarlo al catálogo.
+3b. "Racing Away Player Version" — sin stock actual, no se suma al catálogo por ahora (fotos ya listas — ver 3.4). Retomar cuando haya unidades.
 4. Organizar las fotos de Google Drive por producto (carpeta por club+versión) — ✅ hecho.
 5. Definir costos y zonas de envío (¿solo España? ¿Europa?) **[ABIERTO]**.
 6. Definir si van a facturar como empresa (IVA, factura a clientes) o venta informal **[ABIERTO]** — afecta checkout y contabilidad.
@@ -142,4 +144,6 @@ Esquema actual (`customers`, `products`, `product_variants`, `orders`, `order_it
 10. Adaptar frontend: nuevo catálogo con club/versión/categoría, talles dinámicos por producto, filtro por club — ✅ hecho.
 11. Cargar imágenes reales de los productos — ✅ hecho: fotos guardadas en `frontend/public/images/products/`, con carrusel por producto en `/shop` (ver 3.4).
 12. **[ABIERTO]** Cargar claves reales de Stripe en `backend/.env` para poder probar un pago de punta a punta (hoy están con valores de ejemplo).
-13. Toggle stock vs on-demand en el frontend — no implementado todavía, depende de definir la modalidad on-demand (sección 2.2, sigue abierta).
+13. Toggle stock vs on-demand en el frontend — ✅ hecho.
+14. **[ABIERTO]** Configurar los secrets `BACKEND_URL` y `SCRAPE_SECRET` en GitHub Actions (una vez que el backend esté desplegado en Render) y `SCRAPE_SECRET` en las variables de entorno de Render, para que el cron diario de scraping funcione en producción — ver README.
+15. **Mejora futura (no ahora):** panel de admin para cargar productos/fotos nuevos sin depender de pedirle a Claude que lo haga a mano. Requiere reemplazar el storage de imágenes actual (archivos commiteados en `frontend/public/`) por uno real (ej. Cloudflare R2 o Supabase Storage, ambos con plan gratis) para poder subir fotos en caliente sin necesitar un `git push`. Vale la pena el día que cargar productos nuevos se vuelva frecuente.
