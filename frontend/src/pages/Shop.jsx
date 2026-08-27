@@ -71,11 +71,11 @@ function ProductCard({ product }) {
     <div className="card overflow-hidden flex flex-col">
       <div className="relative">
         <ProductCarousel images={product.image_urls} alt={product.name} />
-        <div className="absolute top-3 right-3 bg-arg-gold text-white font-bold px-3 py-1 rounded-full text-sm shadow pointer-events-none">
+        <div className="absolute top-3 right-3 bg-arg-gold text-pitch-950 font-bold px-3 py-1 rounded-full text-sm shadow pointer-events-none">
           €{product.price.toFixed(2)}
         </div>
         {product.club && (
-          <div className="absolute top-3 left-3 bg-white/90 text-arg-blue-dk font-semibold px-3 py-1 rounded-full text-xs shadow pointer-events-none">
+          <div className="absolute top-3 left-3 bg-pitch-950/85 text-white font-semibold px-3 py-1 rounded-full text-xs shadow pointer-events-none backdrop-blur-sm">
             {product.club}
           </div>
         )}
@@ -118,8 +118,8 @@ function ProductCard({ product }) {
           </div>
         </div>
 
-        <button onClick={handleAdd} className="btn-primary w-full text-sm">
-          🛒 Agregar al carrito
+        <button onClick={handleAdd} className="btn-primary w-full">
+          Agregar al carrito
         </button>
       </div>
     </div>
@@ -148,79 +148,79 @@ export default function Shop() {
 
   const filtered = clubFilter === 'all' ? byType : byType.filter(p => p.club === clubFilter);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-40">
-        <div className="w-12 h-12 rounded-full border-4 border-arg-blue border-t-transparent animate-spin" />
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12">
-      <div className="text-center mb-8">
-        <h1 className="font-display text-5xl text-arg-blue-dk tracking-wider mb-2">
-          NUESTRA COLECCIÓN
-        </h1>
-        <p className="text-gray-400">
-          {typeFilter === 'stock'
-            ? 'Camisetas de clubes argentinos, stock disponible para entrega inmediata'
-            : 'Camisetas a pedido — se encargan tras la compra, entrega estimada 20 días'}
-        </p>
-      </div>
+    <div>
+      {/* Banner de sección */}
+      <section className="hero-bg text-white pt-14 pb-10 px-6 text-center relative overflow-hidden">
+        <div className="absolute inset-0 pitch-texture pointer-events-none" />
+        <div className="relative">
+          <h1 className="font-display text-5xl tracking-wider mb-2">
+            NUESTRA COLECCIÓN
+          </h1>
+          <p className="text-blue-100/80 mb-8">
+            {typeFilter === 'stock'
+              ? 'Camisetas de fútbol con stock disponible para entrega inmediata'
+              : 'Camisetas a pedido — se encargan tras la compra, entrega estimada 20 días'}
+          </p>
 
-      <div className="flex justify-center mb-8">
-        <div className="inline-flex rounded-xl border-2 border-gray-200 p-1">
-          {[
-            { id: 'stock', label: '📦 En stock' },
-            { id: 'on_demand', label: '🕒 A pedido' },
-          ].map(opt => (
-            <button
-              key={opt.id}
-              onClick={() => { setTypeFilter(opt.id); setClubFilter('all'); }}
-              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                typeFilter === opt.id ? 'bg-arg-blue text-white' : 'text-gray-500 hover:text-arg-blue'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+          <div className="inline-flex rounded-xl border-2 border-white/15 bg-white/5 p-1">
+            {[
+              { id: 'stock', label: '📦 En stock' },
+              { id: 'on_demand', label: '🕒 A pedido' },
+            ].map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => { setTypeFilter(opt.id); setClubFilter('all'); }}
+                className={`px-5 py-2 rounded-lg text-sm font-bold uppercase tracking-wide transition-colors ${
+                  typeFilter === opt.id ? 'bg-arg-gold text-pitch-950' : 'text-blue-100/70 hover:text-white'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
 
-      {clubs.length > 1 && (
-        <div className="flex justify-center gap-2 flex-wrap mb-10">
-          <button
-            onClick={() => setClubFilter('all')}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border-2 transition-colors ${
-              clubFilter === 'all' ? 'border-arg-blue bg-arg-blue text-white' : 'border-gray-200 text-gray-500 hover:border-arg-blue'
-            }`}
-          >
-            Todos
-          </button>
-          {clubs.map(club => (
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {clubs.length > 1 && (
+          <div className="flex justify-center gap-2 flex-wrap mb-10">
             <button
-              key={club}
-              onClick={() => setClubFilter(club)}
+              onClick={() => setClubFilter('all')}
               className={`px-4 py-1.5 rounded-full text-sm font-medium border-2 transition-colors ${
-                clubFilter === club ? 'border-arg-blue bg-arg-blue text-white' : 'border-gray-200 text-gray-500 hover:border-arg-blue'
+                clubFilter === 'all' ? 'border-arg-blue-dk bg-arg-blue-dk text-white' : 'border-gray-200 text-gray-500 hover:border-arg-blue-dk'
               }`}
             >
-              {club}
+              Todos
             </button>
-          ))}
-        </div>
-      )}
+            {clubs.map(club => (
+              <button
+                key={club}
+                onClick={() => setClubFilter(club)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium border-2 transition-colors ${
+                  clubFilter === club ? 'border-arg-blue-dk bg-arg-blue-dk text-white' : 'border-gray-200 text-gray-500 hover:border-arg-blue-dk'
+                }`}
+              >
+                {club}
+              </button>
+            ))}
+          </div>
+        )}
 
-      {filtered.length === 0 ? (
-        <p className="text-center text-gray-400 py-20">
-          Sin productos disponibles. Ejecutá <code>npm run seed</code> en el backend.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filtered.map(p => <ProductCard key={p.id} product={p} />)}
-        </div>
-      )}
+        {loading ? (
+          <div className="flex justify-center items-center py-40">
+            <div className="w-12 h-12 rounded-full border-4 border-arg-blue-dk border-t-transparent animate-spin" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-gray-400 py-20">
+            Sin productos disponibles. Ejecutá <code>npm run seed</code> en el backend.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filtered.map(p => <ProductCard key={p.id} product={p} />)}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

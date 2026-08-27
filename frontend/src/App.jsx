@@ -10,8 +10,8 @@ import Orders from './pages/Orders';
 
 function Spinner() {
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-50">
-      <div className="w-12 h-12 rounded-full border-4 border-arg-blue border-t-transparent animate-spin" />
+    <div className="flex items-center justify-center h-screen bg-pitch-950">
+      <div className="w-12 h-12 rounded-full border-4 border-arg-gold border-t-transparent animate-spin" />
     </div>
   );
 }
@@ -26,7 +26,7 @@ function ProtectedRoute({ children }) {
 export default function App() {
   return (
     <CartProvider>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <Navbar />
         <Routes>
           <Route path="/"        element={<Home />} />

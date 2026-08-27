@@ -14,8 +14,8 @@ function CartIcon() {
 }
 
 const linkClass = ({ isActive }) =>
-  `text-sm font-medium transition-colors ${
-    isActive ? 'text-arg-blue' : 'text-gray-600 hover:text-arg-blue-d'
+  `text-sm font-semibold uppercase tracking-wide transition-colors ${
+    isActive ? 'text-arg-gold' : 'text-blue-100/80 hover:text-white'
   }`;
 
 export default function Navbar() {
@@ -24,13 +24,13 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50">
+    <nav className="bg-pitch-950/95 backdrop-blur-sm sticky top-0 z-50 border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <span className="text-xl leading-none">⭐⭐⭐</span>
-          <span className="font-display text-2xl tracking-widest text-arg-blue-dk hidden sm:block">
+          <span className="text-xl leading-none">⚽</span>
+          <span className="font-display text-2xl tracking-widest text-white hidden sm:block">
             CAMISETAS ARG
           </span>
         </Link>
@@ -46,10 +46,10 @@ export default function Navbar() {
 
         {/* Right actions */}
         <div className="flex items-center gap-3">
-          <Link to="/cart" className="relative p-2 text-gray-600 hover:text-arg-blue transition-colors">
+          <Link to="/cart" className="relative p-2 text-blue-100/80 hover:text-white transition-colors">
             <CartIcon />
             {itemCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 bg-arg-gold text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+              <span className="absolute -top-0.5 -right-0.5 bg-arg-gold text-pitch-950 text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {itemCount > 9 ? '9+' : itemCount}
               </span>
             )}
@@ -58,18 +58,18 @@ export default function Navbar() {
           {!isLoading && (
             isAuthenticated ? (
               <div className="hidden sm:flex items-center gap-3">
-                <span className="text-sm text-gray-500 truncate max-w-[120px]">
+                <span className="text-sm text-blue-100/70 truncate max-w-[120px]">
                   {user?.name || user?.email}
                 </span>
                 <button
                   onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
-                  className="text-sm border border-gray-300 hover:border-gray-400 text-gray-600 px-3 py-1.5 rounded-lg transition-colors"
+                  className="text-sm border border-white/20 hover:border-white/40 text-blue-100/80 hover:text-white px-3 py-1.5 rounded-lg transition-colors"
                 >
                   Salir
                 </button>
               </div>
             ) : (
-              <button onClick={() => loginWithRedirect()} className="btn-primary text-sm py-2 px-4">
+              <button onClick={() => loginWithRedirect()} className="btn-gold text-xs py-2 px-4">
                 Ingresar
               </button>
             )
@@ -77,7 +77,7 @@ export default function Navbar() {
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden p-2 text-gray-600"
+            className="md:hidden p-2 text-blue-100/80"
             onClick={() => setMobileOpen(v => !v)}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +91,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t px-4 py-3 space-y-3">
+        <div className="md:hidden bg-pitch-950 border-t border-white/5 px-4 py-3 space-y-3">
           <NavLink to="/"      className={linkClass} onClick={() => setMobileOpen(false)}>Inicio</NavLink>
           <NavLink to="/shop"  className={linkClass} onClick={() => setMobileOpen(false)}>Tienda</NavLink>
           {isAuthenticated && (
@@ -100,7 +100,7 @@ export default function Navbar() {
           {isAuthenticated && (
             <button
               onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
-              className="block text-sm text-red-500"
+              className="block text-sm text-red-400"
             >
               Cerrar sesión
             </button>
