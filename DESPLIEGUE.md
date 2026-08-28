@@ -53,6 +53,14 @@ VITE_API_URL   — https://camisetas-arg-backend.onrender.com
 - **On-demand** (27 productos scrapeados de Yupoo): `cd backend && npm run scrape` — mismo criterio de a qué base apunta.
 - En producción, esto también se puede disparar sin entrar a la terminal: `POST https://camisetas-arg-backend.onrender.com/api/admin/scrape` con el header `X-Scrape-Secret: <el mismo valor que SCRAPE_SECRET>`.
 
+## Fotos de stock nuevas
+
+Las fotos que suban de acá en adelante a `frontend/public/images/products/<producto>/` **hay que optimizarlas antes de commitear** — las de celular sin tocar pesan varios MB cada una y hacen que `/shop` cargue lento. Después de agregar fotos nuevas, correr:
+```
+cd frontend && node scripts/optimize-images.cjs
+```
+Redimensiona a 900px de ancho y comprime — no se nota la diferencia visual en las cards, pero pasan de ~1-3.5MB a ~100-250KB cada una. Es seguro correrlo de nuevo aunque ya haya fotos optimizadas (no las rompe, solo no gana casi nada la segunda vez).
+
 ## Proxy de imágenes (on-demand)
 
 Yupoo bloquea el hotlink directo de sus fotos (si el pedido no "viene" de su propio sitio, devuelve error). Por eso las fotos on-demand no se muestran directo desde `photo.yupoo.com` — el frontend las reescribe para pasar por `GET /api/image-proxy?url=...` en nuestro backend, que le pide la foto a Yupoo con el header correcto y se la reenvía al navegador. Ver `backend/src/controllers/imageProxy.controller.js` y `frontend/src/lib/images.js`.
