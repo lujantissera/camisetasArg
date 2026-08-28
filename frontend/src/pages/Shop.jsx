@@ -24,6 +24,8 @@ function ProductCarousel({ images, alt }) {
       <img
         src={photos[index]}
         alt={alt}
+        loading="lazy"
+        decoding="async"
         className="w-full h-60 object-cover"
         onError={e => { e.target.src = FALLBACK_IMG; }}
       />
